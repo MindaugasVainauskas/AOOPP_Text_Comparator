@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd" id="WebApp_ID" version="3.1">
+	<display-name>Software Development Year 4 - Advanced Object Oriented Design Principles and Patterns</display-name>
+	<description>
+	   2017 Assignment - A JEE Application for Measuring Document Similarity.
+	
+	   Make sure you encapsulate any environmental variables like system paths, connection strings, class names
+	   and the like in this deployment descriptor. These can be configured as context-param elements and then
+	   read and initialised by a start-up servlet.
+	</description>
+	<servlet>
+		<servlet-name>service-handler</servlet-name>
+		<servlet-class>ie.gmit.sw.ServiceHandler</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>service-poll-handler</servlet-name>
+		<servlet-class>ie.gmit.sw.ServicePollHandler</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>index-servlet</servlet-name>
+		<servlet-class>ie.gmit.sw.IndexServlet</servlet-class>
+	</servlet>
+  
+	<!-- <servlet-mapping>
+		<servlet-name>service-handler</servlet-name>
+		<url-pattern>/UploadServlet</url-pattern>
+	</servlet-mapping> -->
+</web-app>

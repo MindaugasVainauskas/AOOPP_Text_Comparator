@@ -8,7 +8,7 @@
 	<tr>
 		<td valign="top">
 
-			<form method="POST" enctype="multipart/form-data" action="doProcess">
+			<form method="POST" enctype="multipart/form-data" action="UploadServlet">
 				<fieldset>
 					<legend><h3>Specify Details</h3></legend>
 
@@ -16,7 +16,7 @@
 					<input name="txtTitle" type="text" size="50"/>
 					<p/>
 					<input type="file" name="txtDocument"/>
-					<input type="submit" value="Compare Document">
+					<input type="submit" value="Compare Document" />
 				</fieldset>							
 			</form>	
 

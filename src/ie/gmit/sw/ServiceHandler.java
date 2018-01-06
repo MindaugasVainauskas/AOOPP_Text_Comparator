@@ -1,6 +1,8 @@
 package ie.gmit.sw;
 
 import java.io.*;
+import java.util.ArrayList;
+
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -13,12 +15,16 @@ import javax.servlet.annotation.*;
                  maxFileSize=1024*1024*10,      // 10MB. The maximum size allowed for uploaded files, in bytes
                  maxRequestSize=1024*1024*50)   // 50MB. he maximum size allowed for a multipart/form-data request, in bytes.
 public class ServiceHandler extends HttpServlet {
+	
+	private static final long serialVersionUID = 1L;
 	/* Declare any shared objects here. For example any of the following can be handled from 
 	 * this context by instantiating them at a servlet level:
 	 *   1) An Asynchronous Message Facade: declare the IN and OUT queues or MessageQueue
 	 *   2) An Chain of Responsibility: declare the initial handler or a full chain object
 	 *   1) A Proxy: Declare a shared proxy here and a request proxy inside doGet()
 	 */
+	private ShingleFactory sf;
+	private ArrayList<TextFile> inQueue;
 	private String environmentalVariable = null; //Demo purposes only. Rename this variable to something more appropriate
 	private static long jobNumber = 0;
 
@@ -31,7 +37,9 @@ public class ServiceHandler extends HttpServlet {
 	public void init() throws ServletException {
 		ServletContext ctx = getServletContext(); //The servlet context is the application itself.
 		
-		//Reads the value from the <context-param> in web.xml. Any application scope variables 
+		//Reads the value from the <context-param> in web.xml. Any application scope variables
+		sf = new ShingleFactory();
+		inQueue = new ArrayList<TextFile>();
 		//defined in the web.xml can be read in as follows:
 		environmentalVariable = ctx.getInitParameter("SOME_GLOBAL_OR_ENVIRONMENTAL_VARIABLE"); 
 	}
@@ -70,9 +78,11 @@ public class ServiceHandler extends HttpServlet {
 			taskNumber = new String("T" + jobNumber);
 			jobNumber++;
 			//Add job to in-queue
+			//TextFile temp = new TextFile(title, part, taskNumber);
+			//inQueue.add(temp);
 		}else{
-			RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
-			dispatcher.forward(req,resp);
+			//RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
+			//dispatcher.forward(req,resp);
 			//Check out-queue for finished job with the given taskNumber
 		}
 		
@@ -110,9 +120,9 @@ public class ServiceHandler extends HttpServlet {
 		out.print("</html>");	
 		
 		//JavaScript to periodically poll the server for updates (this is ideal for an asynchronous operation)
-		out.print("<script>");
-		out.print("var wait=setTimeout(\"document.frmRequestDetails.submit();\", 10000);"); //Refresh every 10 seconds
-		out.print("</script>");
+//		out.print("<script>");
+//		out.print("var wait=setTimeout(\"document.frmRequestDetails.submit();\", 10000);"); //Refresh every 10 seconds
+//		out.print("</script>");
 		
 		
 			
@@ -128,12 +138,21 @@ public class ServiceHandler extends HttpServlet {
 		out.print("<font color=\"0000ff\">");	
 		BufferedReader br = new BufferedReader(new InputStreamReader(part.getInputStream()));
 		String line = null;
+		String text = "";
+		String[] words;
 		while ((line = br.readLine()) != null) {
 			//Break each line up into shingles and do something. The servlet really should act as a
 			//contoller and dispatch this task to something else... Divide and conquer...! I've been
 			//telling you all this since 2nd year...!
-			out.print(line);
+			text += line;
+			//Break the line into shingles		
+			
+//			sf.createShingles(line, 20);
+//			out.print(sf.getSal());
 		}
+		words = new String[text.length()-1];
+		words = text.split(",");	
+		out.print(words);
 		out.print("</font>");	
 	}
 

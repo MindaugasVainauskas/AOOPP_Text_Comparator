@@ -21,8 +21,8 @@
 		<servlet-class>ie.gmit.sw.IndexServlet</servlet-class>
 	</servlet>
   
-	<!-- <servlet-mapping>
-		<servlet-name>service-handler</servlet-name>
-		<url-pattern>/UploadServlet</url-pattern>
-	</servlet-mapping> -->
+	<servlet-mapping>
+		<servlet-name>service-poll-handler</servlet-name>
+		<url-pattern>/poll</url-pattern>
+	</servlet-mapping>
 </web-app>

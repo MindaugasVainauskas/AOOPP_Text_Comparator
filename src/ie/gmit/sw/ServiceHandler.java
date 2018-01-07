@@ -2,6 +2,11 @@ package ie.gmit.sw;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -24,7 +29,8 @@ public class ServiceHandler extends HttpServlet {
 	 *   1) A Proxy: Declare a shared proxy here and a request proxy inside doGet()
 	 */
 	private ShingleFactory sf;
-	private ArrayList<TextFile> inQueue;
+	private JaccardProcessor jpr;
+	private BlockingQueue<TextFile> inQueue;
 	private String environmentalVariable = null; //Demo purposes only. Rename this variable to something more appropriate
 	private static long jobNumber = 0;
 
@@ -39,7 +45,8 @@ public class ServiceHandler extends HttpServlet {
 		
 		//Reads the value from the <context-param> in web.xml. Any application scope variables
 		sf = new ShingleFactory();
-		inQueue = new ArrayList<TextFile>();
+		jpr = new JaccardProcessor();
+		inQueue = new LinkedBlockingQueue<TextFile>();
 		//defined in the web.xml can be read in as follows:
 		environmentalVariable = ctx.getInitParameter("SOME_GLOBAL_OR_ENVIRONMENTAL_VARIABLE"); 
 	}
@@ -71,20 +78,7 @@ public class ServiceHandler extends HttpServlet {
 		//The following string should be extracted as a context from web.xml 
 		out.print("<html><head><title>A JEE Application for Measuring Document Similarity</title>");		
 		out.print("</head>");		
-		out.print("<body>");
-		
-		//We could use the following to track asynchronous tasks. Comment it out otherwise...
-		if (taskNumber == null){
-			taskNumber = new String("T" + jobNumber);
-			jobNumber++;
-			//Add job to in-queue
-			//TextFile temp = new TextFile(title, part, taskNumber);
-			//inQueue.add(temp);
-		}else{
-			//RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
-			//dispatcher.forward(req,resp);
-			//Check out-queue for finished job with the given taskNumber
-		}
+		out.print("<body>");		
 		
 		//Output some headings at the top of the generated page
 		out.print("<H1>Processing request for Job#: " + taskNumber + "</H1>");
@@ -139,22 +133,53 @@ public class ServiceHandler extends HttpServlet {
 		BufferedReader br = new BufferedReader(new InputStreamReader(part.getInputStream()));
 		String line = null;
 		String text = "";
-		String[] words;
+		Set<String> words;
 		while ((line = br.readLine()) != null) {
 			//Break each line up into shingles and do something. The servlet really should act as a
 			//contoller and dispatch this task to something else... Divide and conquer...! I've been
 			//telling you all this since 2nd year...!
-			text += line;
-			//Break the line into shingles		
 			
-//			sf.createShingles(line, 20);
-//			out.print(sf.getSal());
+			//collect the text from inputted document to be used later
+			text += line+"\n";
 		}
-		words = new String[text.length()-1];
-		words = text.split(",");	
+		//convert text all to lowercase
+		text = text.toLowerCase();
+		//Set up words set as TreeSet of unique words in the input text file.
+		words = new TreeSet<String>(Arrays.asList(text.split("[^\\p{L}0-9]+")));
 		out.print(words);
-		out.print("</font>");	
+		out.print("</font>");
+		//We could use the following to track asynchronous tasks. Comment it out otherwise...
+		if (taskNumber == null){
+			taskNumber = new String("T" + jobNumber);
+			jobNumber++;
+			//Add job to in-queue
+			TextFile newFile = new TextFile(title, words, taskNumber);
+			inQueue.add(newFile);
+			
+			TextFile tf;
+			TreeSet<Integer> shingles = new TreeSet<Integer>();
+			try {
+				tf = inQueue.take();
+				
+				double result = jpr.processSimilarity(tf.getFileContent(), tf.getFileContent());
+				out.print("<h3>Resultant similarity ===>>> "+result+"</h3>");
+				for (String s : tf.getFileContent()) {
+					shingles.add(s.hashCode());
+				}
+				
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			//RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
+			//dispatcher.forward(req,resp);
+			//Check out-queue for finished job with the given taskNumber
+		}
+				
 	}
+
+	
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		doGet(req, resp);

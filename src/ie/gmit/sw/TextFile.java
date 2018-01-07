@@ -1,16 +1,16 @@
 package ie.gmit.sw;
 
-import java.util.ArrayList;
+import java.util.Set;
 
 //This object will be saved in the in-queue
 public class TextFile {
 	//Variable declarations
 	private String fileName;
-	private ArrayList<String> fileContent;
+	private Set<String> fileContent;
 	private String taskNumber;
 	
 	//constructor to create object of text file that will be stored in OODB?
-	public TextFile(String fileName, ArrayList<String> fileContent, String taskNum) {
+	public TextFile(String fileName, Set<String> fileContent, String taskNum) {
 		this.fileName = fileName;
 		this.fileContent = fileContent;
 		this.taskNumber = taskNum;
@@ -30,11 +30,11 @@ public class TextFile {
 	public void setTaskNumber(String taskNumber) {
 		this.taskNumber = taskNumber;
 	}
-	public ArrayList<String> getFileContent() {
+	public Set<String> getFileContent() {
 		return fileContent;
 	}
 
-	public void setFileContent(ArrayList<String> fileContent) {
+	public void setFileContent(Set<String> fileContent) {
 		this.fileContent = fileContent;
 	}
 	

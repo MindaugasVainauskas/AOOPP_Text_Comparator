@@ -1,27 +1,10 @@
 package ie.gmit.sw;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import javax.servlet.*;
 import javax.servlet.http.*;
-
-import com.db4o.Db4o;
-import com.db4o.Db4oEmbedded;
-import com.db4o.ObjectContainer;
-import com.db4o.ObjectSet;
-import com.db4o.config.EmbeddedConfiguration;
-import com.db4o.ta.TransparentActivationSupport;
-import com.db4o.ta.TransparentPersistenceSupport;
-
-import xtea_db4o.XTEA;
-import xtea_db4o.XTeaEncryptionStorage;
 
 import javax.servlet.annotation.*;
 
@@ -46,7 +29,6 @@ public class ServiceHandler extends HttpServlet {
 	private String environmentalVariable = null; //Demo purposes only. Rename this variable to something more appropriate
 	private static long jobNumber = 0;
 
-
 	/* This method is only called once, when the servlet is first started (like a constructor). 
 	 * It's the Template Patten in action! Any application-wide variables should be initialised 
 	 * here. Note that if you set the xml element <load-on-startup>1</load-on-startup>, this
@@ -58,10 +40,7 @@ public class ServiceHandler extends HttpServlet {
 		//Reads the value from the <context-param> in web.xml. Any application scope variables
 		sf = new ShingleFactory();
 		simCal = new SimilarityCalculator();
-		//defined in the web.xml can be read in as follows:
-		environmentalVariable = ctx.getInitParameter("SOME_GLOBAL_OR_ENVIRONMENTAL_VARIABLE"); 
 	}
-
 
 	/* The doGet() method handles a HTTP GET request. Please note the following very carefully:
 	 *   1) The doGet() method is executed in a separate thread. If you instantiate any objects
@@ -83,7 +62,6 @@ public class ServiceHandler extends HttpServlet {
 		String title = req.getParameter("txtTitle");
 		String taskNumber = req.getParameter("frmTaskNumber");
 		Part part = req.getPart("txtDocument");
-
 		
 		//Step 4) Process the input and write out the response. 
 		//The following string should be extracted as a context from web.xml 
@@ -93,8 +71,7 @@ public class ServiceHandler extends HttpServlet {
 		
 		//Output some headings at the top of the generated page
 		out.print("<H1>Processing request for Job#: " + taskNumber + "</H1>");
-		out.print("<H3>Document Title: " + title + "</H3>");
-		
+		out.print("<H3>Document Title: " + title + "</H3>");		
 		
 		//Output some useful information for you (yes YOU!)
 		out.print("<div id=\"r\"></div>");
@@ -127,9 +104,7 @@ public class ServiceHandler extends HttpServlet {
 		//JavaScript to periodically poll the server for updates (this is ideal for an asynchronous operation)
 		out.print("<script>");
 		out.print("var wait=setTimeout(\"document.frmRequestDetails.submit();\", 10000);"); //Refresh every 10 seconds
-		out.print("</script>");
-		
-		
+		out.print("</script>");		
 			
 		/* File Upload: The following few lines read the multipart/form-data from an instance of the
 		 * interface Part that is accessed by Part part = req.getPart("txtDocument"). We can read 
@@ -155,9 +130,13 @@ public class ServiceHandler extends HttpServlet {
 		}
 		//convert text all to lowercase
 		text = text.toLowerCase();
+		//Remove any special characters
 		text = text.replaceAll("[,.-;:?!]+", "");
 		//Set up words set as TreeSet of unique words in the input text file.
-		words = sf.createShingles2(text, 20);
+		//There are 2 different ways of breaking document into shingles. 
+		//Can either split the document with every space or just split it into set length substrings
+		words = sf.createShingles2(text);  
+		
 		//out.print(words);
 		out.print("</font>");
 		//We could use the following to track asynchronous tasks. Comment it out otherwise...
@@ -172,8 +151,10 @@ public class ServiceHandler extends HttpServlet {
 			//calculate similarity
 			simCal.calculate();
 			
+			//Get the list of results from the outQueue
 			List<FinalResult> results = simCal.getResults();
 			
+			//Save the session variables to be used in the ServicePollHandler servlet
 			HttpSession session = req.getSession();
 			session.setAttribute("taskNumber", newFile.getTaskNumber());
 			session.setAttribute("results", results);
@@ -182,8 +163,7 @@ public class ServiceHandler extends HttpServlet {
 			RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
 			dispatcher.forward(req,resp);
 			//Check out-queue for finished job with the given taskNumber
-		}
-				
+		}				
 	}	
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

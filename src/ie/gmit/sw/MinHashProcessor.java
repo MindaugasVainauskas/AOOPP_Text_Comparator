@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class MinHashProcessor implements Similarator {
-	
+	//Declare variables and a constant for K size. I chose 100 but it can be increased or reduced as needed.
 	private static final int K_SIZE = 100;
 	private List<Integer> set1;
 	private List<Integer> set2;
@@ -18,7 +18,7 @@ public class MinHashProcessor implements Similarator {
 		set1 = new ArrayList<Integer>();
 		set2 = new ArrayList<Integer>();
 		
-		getHashes(s1, s2);
+		getHashes(s1, s2);  //Convert String sets into hash arraylists
 		
 		//counter for how many hashes are equal
 		int equalCount = 0;

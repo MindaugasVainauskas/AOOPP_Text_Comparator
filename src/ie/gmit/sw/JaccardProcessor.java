@@ -23,11 +23,12 @@ public class JaccardProcessor implements Similarator{
 		temp1 = s1;
 		temp2 = s2;
 		
+		//set variable sto sizes of 2 sets
 		l1 = temp1.size();
 		l2 = temp2.size();
-		
+		//apply method to only leave same shingles in the temp1
 		temp1.retainAll(temp2);
-		intersection = temp1.size();
+		intersection = temp1.size();  //Intersection number is the temp1 set size
 		//if intersection is 0(files contain no same shingles at all) just return similarity of zero.
 		//Otherwise calculate similarity index.
 		if(!(intersection == 0)){
@@ -36,7 +37,7 @@ public class JaccardProcessor implements Similarator{
 			similarity = 0.0;
 		}
 		
-		return similarity;
+		return similarity; //return the similarity index
 	}
 
 }

@@ -6,11 +6,10 @@ import java.util.List;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import com.db4o.Db4oEmbedded;
-import com.db4o.ObjectContainer;
-import com.db4o.ObjectSet;
-
 public class ServicePollHandler extends HttpServlet {
+	//default version ID
+	private static final long serialVersionUID = 1L;
+
 	public void init() throws ServletException {
 		ServletContext ctx = getServletContext();
 	}
@@ -26,8 +25,9 @@ public class ServicePollHandler extends HttpServlet {
 			counter = Integer.parseInt(req.getParameter("counter"));
 			counter++;
 		}
-		
+		//Recover session saved int SessionHandler servlet
 		HttpSession session = req.getSession();
+		//Retrieve variable and a result list
 		taskNumber = (String) session.getAttribute("taskNumber");
 		List<FinalResult> results = (List<FinalResult>) session.getAttribute("results");
 
@@ -37,9 +37,10 @@ public class ServicePollHandler extends HttpServlet {
 		out.print("<H1>Processing request for Job#: " + taskNumber + "</H1>");
 		out.print("<H3>Document Title: " + title + "</H3>");
 		out.print("<b><font color=\"ff0000\">A total of " + counter + " polls have been made for this request.</font></b> ");
-		out.print("<table border='1' cellspacing='5'>");
+		//Decided to go with a simple table for result display.
+		out.print("<table border='1' cellspacing='1'>");
 		out.print("<tr>");
-		out.print("<th>Title</th>");
+		out.print("<th>Document Title</th>");
 		out.print("<th>Jaccard Similarity</th>");
 		out.print("<th>MinHash Similarity</th>");
 		out.print("</tr>");
@@ -50,8 +51,7 @@ public class ServicePollHandler extends HttpServlet {
 				out.print("<td>" + res.getMinHashSimilarity() + "</td>");
 				out.print("</tr>");
 			}
-		out.print("</table>");
-		
+		out.print("</table>");		
 		out.print("<form name=\"frmRequestDetails\">");
 		out.print("<input name=\"txtTitle\" type=\"hidden\" value=\"" + title + "\">");
 		out.print("<input name=\"frmTaskNumber\" type=\"hidden\" value=\"" + taskNumber + "\">");

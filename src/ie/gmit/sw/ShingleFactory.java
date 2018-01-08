@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
+//This class splits the given text string into set of characters.
+//Can be either set length character substrings or single word shingles.
 public class ShingleFactory {
 
 	//takes in string and shingle length int value, creates shingles out of it and sets shingle array list to its value.
@@ -15,7 +17,8 @@ public class ShingleFactory {
 		return temp;		
 	}
 
-	public Set<String> createShingles2(String s, int l){
+	//This method will split the text with every space. Since all specia characters have been removed it is easy to split it into single words
+	public Set<String> createShingles2(String s){
 		Set<String> temp;
 		temp = new TreeSet<String>(Arrays.asList(s.split(" ")));
 		return temp;		

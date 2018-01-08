@@ -68,6 +68,7 @@ public class SimilarityCalculator {
 		db.commit();  //Commit the tx		
 	}
 	
+	//This method returns results from the outQueue to the servlet to be saved in the session
 	public List<FinalResult> getResults(){
 		List<FinalResult> temp = new ArrayList<FinalResult>();
 		for (FinalResult fr : outQueue.values()) {

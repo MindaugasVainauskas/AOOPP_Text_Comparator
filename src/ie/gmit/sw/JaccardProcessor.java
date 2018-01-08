@@ -28,7 +28,14 @@ public class JaccardProcessor implements Similarator{
 		
 		temp1.retainAll(temp2);
 		intersection = temp1.size();
-		similarity = (l1+l2-intersection)/intersection;
+		//if intersection is 0(files contain no same shingles at all) just return similarity of zero.
+		//Otherwise calculate similarity index.
+		if(!(intersection == 0)){
+			similarity = (l1+l2-intersection)/intersection;
+		}else{
+			similarity = 0.0;
+		}
+		
 		return similarity;
 	}
 

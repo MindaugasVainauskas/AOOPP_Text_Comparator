@@ -10,6 +10,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
+
+import com.db4o.Db4o;
+import com.db4o.Db4oEmbedded;
+import com.db4o.ObjectContainer;
+import com.db4o.ObjectSet;
+import com.db4o.config.EmbeddedConfiguration;
+import com.db4o.ta.TransparentActivationSupport;
+import com.db4o.ta.TransparentPersistenceSupport;
+
+import xtea_db4o.XTEA;
+import xtea_db4o.XTeaEncryptionStorage;
+
 import javax.servlet.annotation.*;
 
 /* NB: You will need to add the JAR file $TOMCAT_HOME/lib/servlet-api.jar to your CLASSPATH 
@@ -30,6 +42,8 @@ public class ServiceHandler extends HttpServlet {
 	 */
 	private ShingleFactory sf;
 	private JaccardProcessor jpr;
+	private ObjectContainer dbr;
+	private ObjectContainer db;
 	private BlockingQueue<TextFile> inQueue;
 	private String environmentalVariable = null; //Demo purposes only. Rename this variable to something more appropriate
 	private static long jobNumber = 0;
@@ -43,6 +57,16 @@ public class ServiceHandler extends HttpServlet {
 	public void init() throws ServletException {
 		ServletContext ctx = getServletContext(); //The servlet context is the application itself.
 		
+		//Set Up DB4O
+		EmbeddedConfiguration config = Db4oEmbedded.newConfiguration();
+		config.common().add(new TransparentActivationSupport()); //Real lazy. Saves all the config commented out below
+		config.common().add(new TransparentPersistenceSupport()); //Lazier still. Saves all the config commented out below
+		config.common().updateDepth(7); //Propagate updates
+		
+//		//Use the XTea lib for encryption. The basic Db4O container only has a Caesar cypher... Dicas quod non est ita!
+		config.file().storage(new XTeaEncryptionStorage("password", XTEA.ITERATIONS64));
+				
+		dbr = Db4oEmbedded.openFile(config, "TextFiles.data");
 		//Reads the value from the <context-param> in web.xml. Any application scope variables
 		sf = new ShingleFactory();
 		jpr = new JaccardProcessor();
@@ -144,9 +168,10 @@ public class ServiceHandler extends HttpServlet {
 		}
 		//convert text all to lowercase
 		text = text.toLowerCase();
+		text = text.replaceAll("[,.-;:?!]+", "");
 		//Set up words set as TreeSet of unique words in the input text file.
-		words = new TreeSet<String>(Arrays.asList(text.split("[^\\p{L}0-9]+")));
-		out.print(words);
+		words = sf.createShingles2(text, 20);
+		//out.print(words);
 		out.print("</font>");
 		//We could use the following to track asynchronous tasks. Comment it out otherwise...
 		if (taskNumber == null){
@@ -154,23 +179,37 @@ public class ServiceHandler extends HttpServlet {
 			jobNumber++;
 			//Add job to in-queue
 			TextFile newFile = new TextFile(title, words, taskNumber);
+			
+			db = dbr.ext().openSession();
+			
+			//add to DB4O
+			db.store(newFile);
+			db.commit();
+			
+			//Add to inQueue
 			inQueue.add(newFile);
 			
 			TextFile tf;
-			TreeSet<Integer> shingles = new TreeSet<Integer>();
 			try {
 				tf = inQueue.take();
+				double result;
 				
-				double result = jpr.processSimilarity(tf.getFileContent(), tf.getFileContent());
-				out.print("<h3>Resultant similarity ===>>> "+result+"</h3>");
-				for (String s : tf.getFileContent()) {
-					shingles.add(s.hashCode());
+				ObjectSet<TextFile> texts = db.query(TextFile.class);
+				
+				for (TextFile textFile : texts) {
+					out.print("<h3>"+tf.getFileContent().size()+"</h3>");
+					out.print("<h3>"+textFile.getFileContent().size()+"</h3>");
+					result = jpr.processSimilarity(tf.getFileContent(), textFile.getFileContent());
+					out.print("<h3>Resultant similarity to "+textFile.getFileTitle()+" ===>>> "+result+"</h3>");
+										
 				}
+				
 				
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			//db.close();
 		}else{
 			//RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
 			//dispatcher.forward(req,resp);

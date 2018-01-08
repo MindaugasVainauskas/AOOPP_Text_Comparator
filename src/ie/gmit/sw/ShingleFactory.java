@@ -1,28 +1,23 @@
 package ie.gmit.sw;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class ShingleFactory {
-	
-	//shingle array list variable
-	private ArrayList<String> sal;
-	
-	//returns sal value
-	public ArrayList<String> getSal() {
-		return sal;
-	}
-
-	//sets sal to the given array list value.
-	public void setSal(ArrayList<String> sal) {
-		this.sal = sal;
-	}
 
 	//takes in string and shingle length int value, creates shingles out of it and sets shingle array list to its value.
-	public void createShingles(String s, int l){
-		sal = new ArrayList<String>();
-		for (int i = 0; i < s.length()-l; i+=l) {
-			sal.add(s.substring(i, i+l));
-		}
+	public Set<String> createShingles(String s, int l){
+		Set<String> temp = new TreeSet<String>();
+		for (int start = 0; start < s.length(); start += l) {
+	        temp.add(s.substring(start, Math.min(s.length(), start + l)));
+	    }
+		return temp;		
 	}
 
+	public Set<String> createShingles2(String s, int l){
+		Set<String> temp;
+		temp = new TreeSet<String>(Arrays.asList(s.split(" ")));
+		return temp;		
+	}
 }

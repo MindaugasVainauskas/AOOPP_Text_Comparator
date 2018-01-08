@@ -3,6 +3,7 @@ package ie.gmit.sw;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
@@ -40,12 +41,8 @@ public class ServiceHandler extends HttpServlet {
 	 *   2) An Chain of Responsibility: declare the initial handler or a full chain object
 	 *   1) A Proxy: Declare a shared proxy here and a request proxy inside doGet()
 	 */
-	private ShingleFactory sf;
-	private JaccardProcessor jpr;
-	private MinHashProcessor mhp;
-	private ObjectContainer dbr;
-	private ObjectContainer db;
-	private BlockingQueue<TextFile> inQueue;
+	private ShingleFactory sf;	
+	private SimilarityCalculator simCal;
 	private String environmentalVariable = null; //Demo purposes only. Rename this variable to something more appropriate
 	private static long jobNumber = 0;
 
@@ -58,21 +55,9 @@ public class ServiceHandler extends HttpServlet {
 	public void init() throws ServletException {
 		ServletContext ctx = getServletContext(); //The servlet context is the application itself.
 		
-		//Set Up DB4O
-		EmbeddedConfiguration config = Db4oEmbedded.newConfiguration();
-		config.common().add(new TransparentActivationSupport()); //Real lazy. Saves all the config commented out below
-		config.common().add(new TransparentPersistenceSupport()); //Lazier still. Saves all the config commented out below
-		config.common().updateDepth(7); //Propagate updates
-		
-//		//Use the XTea lib for encryption. The basic Db4O container only has a Caesar cypher... Dicas quod non est ita!
-		config.file().storage(new XTeaEncryptionStorage("password", XTEA.ITERATIONS64));
-				
-		dbr = Db4oEmbedded.openFile(config, "TextFiles.data");
 		//Reads the value from the <context-param> in web.xml. Any application scope variables
 		sf = new ShingleFactory();
-		jpr = new JaccardProcessor();
-		mhp = new MinHashProcessor();
-		inQueue = new LinkedBlockingQueue<TextFile>();
+		simCal = new SimilarityCalculator();
 		//defined in the web.xml can be read in as follows:
 		environmentalVariable = ctx.getInitParameter("SOME_GLOBAL_OR_ENVIRONMENTAL_VARIABLE"); 
 	}
@@ -140,9 +125,9 @@ public class ServiceHandler extends HttpServlet {
 		out.print("</html>");	
 		
 		//JavaScript to periodically poll the server for updates (this is ideal for an asynchronous operation)
-//		out.print("<script>");
-//		out.print("var wait=setTimeout(\"document.frmRequestDetails.submit();\", 10000);"); //Refresh every 10 seconds
-//		out.print("</script>");
+		out.print("<script>");
+		out.print("var wait=setTimeout(\"document.frmRequestDetails.submit();\", 10000);"); //Refresh every 10 seconds
+		out.print("</script>");
 		
 		
 			
@@ -179,49 +164,27 @@ public class ServiceHandler extends HttpServlet {
 		if (taskNumber == null){
 			taskNumber = new String("T" + jobNumber);
 			jobNumber++;
-			//Add job to in-queue
+			//Create new TextFile object to store in db and inQueue
 			TextFile newFile = new TextFile(title, words, taskNumber);
 			
-			db = dbr.ext().openSession();			
+			//Add to inQueue in the similarity calculator class
+			simCal.addtoInQueue(newFile);
+			//calculate similarity
+			simCal.calculate();
 			
-			//Add to inQueue
-			inQueue.add(newFile);
-			//add to DB4O
-			db.store(newFile);
-			db.commit();
+			List<FinalResult> results = simCal.getResults();
 			
-			TextFile tf;
-			try {
-				tf = inQueue.take();
-				double result;
-				double mhResult;
-				
-				ObjectSet<TextFile> texts = db.query(TextFile.class);
-				
-				for (TextFile textFile : texts) {
-					out.print("<h3>"+tf.getFileContent().size()+"</h3>");
-					out.print("<h3>"+textFile.getFileContent().size()+"</h3>");
-					result = jpr.processSimilarity(tf.getFileContent(), textFile.getFileContent());
-					mhResult = mhp.processSimilarity(tf.getFileContent(), textFile.getFileContent());
-					out.print("<h3>Jaccard similarity to "+textFile.getFileTitle()+" ===>>> "+result+"</h3>");
-					out.print("<h3>MinHash similarity to "+textFile.getFileTitle()+" ===>>> "+mhResult+"</h3>");
-										
-				}
-				
-				
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			HttpSession session = req.getSession();
+			session.setAttribute("taskNumber", newFile.getTaskNumber());
+			session.setAttribute("results", results);
+			
 		}else{
-			//RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
-			//dispatcher.forward(req,resp);
+			RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
+			dispatcher.forward(req,resp);
 			//Check out-queue for finished job with the given taskNumber
 		}
 				
-	}
-
-	
+	}	
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		doGet(req, resp);

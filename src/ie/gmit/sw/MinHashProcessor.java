@@ -1,7 +1,6 @@
 package ie.gmit.sw;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -17,7 +16,7 @@ public class MinHashProcessor implements Similarator {
 	public double processSimilarity(Set<String> s1, Set<String> s2) {
 		
 		set1 = new ArrayList<Integer>();
-		set1 = new ArrayList<Integer>();
+		set2 = new ArrayList<Integer>();
 		
 		getHashes(s1, s2);
 		
@@ -26,10 +25,8 @@ public class MinHashProcessor implements Similarator {
 		for (int i = 0; i < K_SIZE; i++) {
 			if (set1.get(i).equals(set2.get(i))) {
 				equalCount++;
-			}
-			
-		}
-		
+			}			
+		}		
 		//Similarity index that will be returned
 		double similarityIndex = (double) equalCount/(double) K_SIZE;
 		
@@ -59,7 +56,7 @@ public class MinHashProcessor implements Similarator {
 				if(minHash < min){
 					min = minHash;
 				}				
-				set2.add(min); //store minimum hash into set
+				set2.add(min); //store minimum hash into set 
 			}
 		}
 	}

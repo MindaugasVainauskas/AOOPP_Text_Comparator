@@ -13,7 +13,7 @@ Author: *Mindaugas Vainauskas*
 ### Project Description
 
 This project is a Web Application that checks for similarity between 2 or more documents and returns the results in a table.
-The similarity checking was performed using Jaccard Similarity algorithm and MinHash similarity algorithm.
+The similarity checking was performed using Jaccard Similarity algorithm and MinHash similarity algorithm. Display of both input forms and results output is done through JSP pages with Http Servlets behind them.
 
 ### Project aim
 I was trying to build this project with the idea that its parts should be reusable, loosely coupled and highly cohesive. I don't think I managed to achieve all the targets set to myself but I do believe that at least parts of the project worked out as intended.

@@ -42,6 +42,7 @@ public class ServiceHandler extends HttpServlet {
 	 */
 	private ShingleFactory sf;
 	private JaccardProcessor jpr;
+	private MinHashProcessor mhp;
 	private ObjectContainer dbr;
 	private ObjectContainer db;
 	private BlockingQueue<TextFile> inQueue;
@@ -70,6 +71,7 @@ public class ServiceHandler extends HttpServlet {
 		//Reads the value from the <context-param> in web.xml. Any application scope variables
 		sf = new ShingleFactory();
 		jpr = new JaccardProcessor();
+		mhp = new MinHashProcessor();
 		inQueue = new LinkedBlockingQueue<TextFile>();
 		//defined in the web.xml can be read in as follows:
 		environmentalVariable = ctx.getInitParameter("SOME_GLOBAL_OR_ENVIRONMENTAL_VARIABLE"); 
@@ -180,19 +182,19 @@ public class ServiceHandler extends HttpServlet {
 			//Add job to in-queue
 			TextFile newFile = new TextFile(title, words, taskNumber);
 			
-			db = dbr.ext().openSession();
-			
-			//add to DB4O
-			db.store(newFile);
-			db.commit();
+			db = dbr.ext().openSession();			
 			
 			//Add to inQueue
 			inQueue.add(newFile);
+			//add to DB4O
+			db.store(newFile);
+			db.commit();
 			
 			TextFile tf;
 			try {
 				tf = inQueue.take();
 				double result;
+				double mhResult;
 				
 				ObjectSet<TextFile> texts = db.query(TextFile.class);
 				
@@ -200,7 +202,9 @@ public class ServiceHandler extends HttpServlet {
 					out.print("<h3>"+tf.getFileContent().size()+"</h3>");
 					out.print("<h3>"+textFile.getFileContent().size()+"</h3>");
 					result = jpr.processSimilarity(tf.getFileContent(), textFile.getFileContent());
-					out.print("<h3>Resultant similarity to "+textFile.getFileTitle()+" ===>>> "+result+"</h3>");
+					mhResult = mhp.processSimilarity(tf.getFileContent(), textFile.getFileContent());
+					out.print("<h3>Jaccard similarity to "+textFile.getFileTitle()+" ===>>> "+result+"</h3>");
+					out.print("<h3>MinHash similarity to "+textFile.getFileTitle()+" ===>>> "+mhResult+"</h3>");
 										
 				}
 				
@@ -209,7 +213,6 @@ public class ServiceHandler extends HttpServlet {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			//db.close();
 		}else{
 			//RequestDispatcher dispatcher = req.getRequestDispatcher("/poll");
 			//dispatcher.forward(req,resp);
